@@ -1,0 +1,17 @@
+.git
+.venv
+.agents
+tests
+__pycache__
+.pytest_cache
+.ruff_cache
+*.pyc
+Dockerfile
+docker-compose.yml
+.dockerignore
+.env
+.env.local
+.coverage
+docs
+results
+README.md

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Herramientas de calidad
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Entorno y secretos
+.env
+.env.local
+
+# Editores y sistema
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Artefactos locales
+results/
+tests/load/vegeta-report.txt
+*.log

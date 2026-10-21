@@ -1,0 +1,22 @@
+services:
+  pdf-persistence:
+    build: .
+    container_name: pdf-persistence
+    ports:
+      - "${PORT:-8003}:${PORT:-8003}"
+    environment:
+      PORT: "${PORT:-8003}"
+      MONGO_URI: "${MONGO_URI:-mongodb://mongo_db:27017}"
+      MONGO_DATABASE: "${MONGO_DATABASE:-pdf_persistence}"
+      MONGO_COLLECTION: "${MONGO_COLLECTION:-documents}"
+      MONGO_TIMEOUT_MS: "${MONGO_TIMEOUT_MS:-5000}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    restart: unless-stopped
+    stop_grace_period: 10s
+    networks:
+      - pdf-ecosystem-net
+
+networks:
+  pdf-ecosystem-net:
+    external: true
+    name: pdf-ecosystem-net
