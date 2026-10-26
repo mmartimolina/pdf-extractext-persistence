@@ -77,7 +77,7 @@ class FakeClient:
     def __init__(self, fail: Exception | None = None):
         self.admin = FakeAdmin(fail)
 
-    def close(self):
+    async def close(self):
         self.closed = True
 
 

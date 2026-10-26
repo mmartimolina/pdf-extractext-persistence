@@ -169,4 +169,4 @@ class MongoRepository:
 
     async def aclose(self) -> None:
         """Cierra el cliente MongoDB."""
-        self._client.close()
+        await self._client.close()

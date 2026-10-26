@@ -9,11 +9,11 @@ Ejecución::
     TEST_MONGO_URI=mongodb://localhost:27017 uv run pytest -m integration --no-cov
 """
 
-import contextlib
 import os
 import uuid
 
 import pytest
+from pymongo import AsyncMongoClient
 
 from pdf_persistence.config import Settings
 from pdf_persistence.container import Container
@@ -32,8 +32,15 @@ def _mongo_available() -> bool:
     return bool(TEST_MONGO_URI)
 
 
-@pytest.fixture(scope="module")
-def container():
+@pytest.fixture
+async def container():
+    """Contenedor con repositorio MongoDB real y base de datos efímera.
+
+    El alcance por función garantiza que cada prueba cree y destruya el
+    ``AsyncMongoClient`` dentro de su propio ciclo de eventos: PyMongo
+    vincula el cliente al ciclo donde se usa por primera vez y no admite
+    que se reutilice en otro distinto.
+    """
     if not _mongo_available():
         pytest.skip("TEST_MONGO_URI no está configurado; se omite la integración.")
     unique = uuid.uuid4().hex[:8]
@@ -55,13 +62,14 @@ def container():
     )
     built = Container(repository=repository, use_case=DocumentUseCase(repository))
     yield built
-    repository._client.drop_database(settings.mongo_database)
-    repository._client.close()
-
-
-async def _cleanup(container, checksum):
-    with contextlib.suppress(Exception):  # limpieza best-effort
-        await container.repository._collection.delete_one({"checksum": checksum})
+    try:
+        await repository.aclose()
+    finally:
+        async with AsyncMongoClient(
+            host=settings.mongo_uri,
+            serverSelectionTimeoutMS=settings.mongo_timeout_ms,
+        ) as client:
+            await client.drop_database(settings.mongo_database)
 
 
 @pytest.mark.skipif(not _mongo_available(), reason="TEST_MONGO_URI no configurado")
@@ -74,7 +82,6 @@ class TestMongoIntegration:
             await container.use_case.create(
                 {"checksum": checksum, "filename": "otro.pdf"}
             )
-        await _cleanup(container, checksum)
 
     async def test_full_document_lifecycle(self, container):
         await container.ensure_indexes()
@@ -104,7 +111,6 @@ class TestMongoIntegration:
             await container.use_case.get(checksum)
         _, total_after_delete = await container.use_case.list(limit=10, offset=0)
         assert total_after_delete == total - 1
-        await _cleanup(container, checksum)
 
     async def test_ping_is_real(self, container):
         assert await container.use_case.ping() is True

@@ -25,9 +25,9 @@ uv run pytest -m integration --no-cov
 docker stop pdf-persistence-it
 ```
 
-Cada ejecución crea una base de datos única (`pdf_persistence_it_<id>`)
-que se elimina al terminar, por lo que las pruebas son reproducibles y
-no contaminan otros entornos.
+Cada prueba crea una base de datos única (`pdf_persistence_it_<id>`) que
+se elimina al terminar, por lo que las pruebas son reproducibles y no
+contaminan otros entornos.
 
 ## Notas
 
