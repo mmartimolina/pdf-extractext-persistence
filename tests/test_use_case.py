@@ -52,6 +52,11 @@ class TestCreate:
         assert created is False
         assert second == first
 
+    async def test_create_conflict_when_replay_has_only_checksum(self, use_case):
+        await use_case.create(PAYLOAD)
+        with pytest.raises(DocumentAlreadyExistsError):
+            await use_case.create({"checksum": PAYLOAD["checksum"]})
+
     async def test_create_conflict_for_different_payload(self, use_case):
         await use_case.create(PAYLOAD)
         different = {**PAYLOAD, "filename": "otro.pdf"}
