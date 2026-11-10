@@ -104,7 +104,9 @@ async def create_document(body: DocumentCreateRequest, request: Request) -> Resp
         body.checksum,
         getattr(request.state, "request_id", "-"),
     )
-    document, created = await _use_case(request).create(body.model_dump(exclude_unset=True))
+    document, created = await _use_case(request).create(
+        body.model_dump(exclude_unset=True)
+    )
     response = JSONResponse(
         status_code=201 if created else 200,
         content=_document_json(document),
