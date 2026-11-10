@@ -1,0 +1,32 @@
+services:
+  pdf-persistence:
+    build: .
+    expose:
+      - "8003"
+    environment:
+      PORT: "8003"
+      MONGO_URI: "${MONGO_URI:?Defina MONGO_URI para MongoDB}"
+      MONGO_DATABASE: "${MONGO_DATABASE:-pdf_persistence}"
+      MONGO_COLLECTION: "${MONGO_COLLECTION:-documents}"
+      CONSUL_HTTP_ADDR: "${CONSUL_HTTP_ADDR:-http://consul:8500}"
+      SERVICE_ADDRESS: "pdf-persistence"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/live', timeout=4)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - pdf-ecosystem
+
+networks:
+  pdf-ecosystem:
+    external: true
+    name: ${PDF_ECOSYSTEM_NETWORK:-pdf-ecosystem-net}
