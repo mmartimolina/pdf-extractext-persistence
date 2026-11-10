@@ -42,6 +42,52 @@ class TestCreateDocument:
         assert replay.status_code == 200
         assert replay.json()["checksum"] == CHECKSUM
 
+    def test_create_supports_minimal_saga_reservation(self, client):
+        response = _create(client, {
+            "checksum": CHECKSUM,
+            "checksum_algorithm": "sha256",
+            "metadata": {"saga_id": "req-saga-1", "saga_status": "PENDING"},
+        })
+        assert response.status_code == 201
+        assert response.json()["metadata"] == {
+            "saga_id": "req-saga-1", "saga_status": "PENDING"
+        }
+        completed = client.put(
+            f"/documents/{CHECKSUM}",
+            json={
+                "text": "texto extraído",
+                "summary": "resumen",
+                "page_count": 2,
+                "file_size_bytes": 2048,
+                "metadata": {"saga_id": "req-saga-1", "saga_status": "COMPLETED"},
+            },
+        )
+        assert completed.status_code == 200
+        assert completed.json()["metadata"]["saga_status"] == "COMPLETED"
+
+    def test_saga_reservation_replay_is_idempotent_for_same_id(self, client):
+        reservation = {
+            "checksum": CHECKSUM,
+            "checksum_algorithm": "sha256",
+            "metadata": {"saga_id": "req-1", "saga_status": "PENDING"},
+        }
+        assert client.post("/documents", json=reservation).status_code == 201
+        replay = client.post("/documents", json=reservation)
+        assert replay.status_code == 200
+
+    def test_saga_reservation_conflicts_with_different_id(self, client):
+        first = {
+            "checksum": CHECKSUM,
+            "checksum_algorithm": "sha256",
+            "metadata": {"saga_id": "req-1", "saga_status": "PENDING"},
+        }
+        second = {
+            **first,
+            "metadata": {"saga_id": "req-2", "saga_status": "PENDING"},
+        }
+        assert client.post("/documents", json=first).status_code == 201
+        assert client.post("/documents", json=second).status_code == 409
+
     def test_create_conflict_on_different_payload(self, client):
         _create(client)
         response = _create(client, {**CREATE_BODY, "filename": "otro.pdf"})

@@ -59,10 +59,14 @@ class DocumentUseCase:
 
     @staticmethod
     def _same_payload(existing: StoredDocument, payload: dict) -> bool:
-        return all(
+        compared_fields = [
+            field for field in UPDATABLE_FIELDS if field in payload
+        ]
+        # Un checksum sin ningún dato de negocio no alcanza para afirmar
+        # que dos solicitudes son una repetición idempotente.
+        return bool(compared_fields) and all(
             getattr(existing, field) == payload.get(field)
-            for field in UPDATABLE_FIELDS
-            if field in payload
+            for field in compared_fields
         )
 
     async def get(self, checksum: str) -> StoredDocument:

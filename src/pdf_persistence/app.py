@@ -13,6 +13,7 @@ from pdf_persistence.api.middleware import (
 from pdf_persistence.api.routes import router
 from pdf_persistence.config import Settings
 from pdf_persistence.container import Container
+from pdf_persistence.consul import ConsulRegistration
 from pdf_persistence.domain.errors import PersistenceError
 
 logger = logging.getLogger("pdf_persistence.app")
@@ -27,14 +28,19 @@ async def _lifespan(app: FastAPI):
     negocio se responden de forma controlada.
     """
     container: Container = app.state.container
+    consul = ConsulRegistration("pdf-persistence", 8003, "/health/ready")
     logger.info("startup")
     try:
         await container.ensure_indexes()
     except PersistenceError as exc:
         logger.warning("index_initialization_failed code=%s", exc.code)
-    yield
-    await container.aclose()
-    logger.info("shutdown")
+    await consul.register()
+    try:
+        yield
+    finally:
+        await consul.deregister()
+        await container.aclose()
+        logger.info("shutdown")
 
 
 def create_app(
