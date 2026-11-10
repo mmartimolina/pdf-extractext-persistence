@@ -8,7 +8,7 @@ services:
       MONGO_URI: "${MONGO_URI:?Defina MONGO_URI para MongoDB}"
       MONGO_DATABASE: "${MONGO_DATABASE:-pdf_persistence}"
       MONGO_COLLECTION: "${MONGO_COLLECTION:-documents}"
-      CONSUL_HTTP_ADDR: "${CONSUL_HTTP_ADDR:-http://consul:8500}"
+      CONSUL_HTTP_ADDR: "${CONSUL_HTTP_ADDR:-}"
       SERVICE_ADDRESS: "pdf-persistence"
     healthcheck:
       test:
