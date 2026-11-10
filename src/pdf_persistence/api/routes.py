@@ -88,7 +88,7 @@ async def metrics() -> PlainTextResponse:
     "/documents",
     status_code=201,
     response_model=DocumentResponse,
-    summary="Registra un documento procesado",
+    summary="Registra o reserva un documento para una SAGA",
     responses={
         200: {"description": "Repetición idempotente: datos idénticos ya registrados."},
         409: {"description": "Checksum existente con datos distintos."},
@@ -98,13 +98,13 @@ async def metrics() -> PlainTextResponse:
     },
 )
 async def create_document(body: DocumentCreateRequest, request: Request) -> Response:
-    """Crea un documento. Idempotente por checksum con datos idénticos."""
+    """Crea un documento; permite reservarlo con metadata de SAGA PENDING."""
     logger.info(
         "create_document checksum=%s request_id=%s",
         body.checksum,
         getattr(request.state, "request_id", "-"),
     )
-    document, created = await _use_case(request).create(body.model_dump())
+    document, created = await _use_case(request).create(body.model_dump(exclude_unset=True))
     response = JSONResponse(
         status_code=201 if created else 200,
         content=_document_json(document),
