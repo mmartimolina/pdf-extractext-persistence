@@ -28,7 +28,7 @@ async def _lifespan(app: FastAPI):
     negocio se responden de forma controlada.
     """
     container: Container = app.state.container
-    consul = ConsulRegistration("pdf-persistence", 8003, "/health/live")
+    consul = ConsulRegistration("pdf-persistence", 8003, "/health/ready")
     logger.info("startup")
     try:
         await container.ensure_indexes()
